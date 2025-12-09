@@ -1,8 +1,6 @@
 // ==========================================
-// 1. DEFINE THE SCENES FIRST (Classes)
+// 1. SCENE: LOADING (Must be defined first)
 // ==========================================
-
-// --- SCENE 1: LOADER ---
 class SceneLoad extends Phaser.Scene {
     constructor() { super('SceneLoad'); }
 
@@ -12,18 +10,20 @@ class SceneLoad extends Phaser.Scene {
             fontSize: '24px', fill: '#000' 
         }).setOrigin(0.5);
 
-        // Error Handler
+        // Error Handler (Helps us identify missing files)
         this.load.on('loaderror', function (file) {
             console.log("Failed to load: " + file.src);
             loadingText.setText("Missing: " + file.key); 
             loadingText.setColor('#ff0000');
         });
 
-        // LOAD ASSETS (Inside 'assets/' folder)
+        // --- LOAD ASSETS ---
+        // We use 'assets/' because your files are inside the folder
+        
         this.load.image('logo', 'assets/logo.png'); 
 
         // Mascots
-        this.load.image('tiger_idle', 'assets/mascot_tiger_01_idle.png');
+        this.load.image('tiger_idle', 'assets/mascot_tiger_01_idle.png'); // Note: Ensure this file is .png on GitHub
         this.load.image('tiger_talk', 'assets/mascot_tiger_02_talking.png');
         this.load.image('tiger_happy', 'assets/mascot_tiger_03_happy.png');
         this.load.image('tiger_sad', 'assets/mascot_tiger_04_sad.png');
@@ -33,6 +33,7 @@ class SceneLoad extends Phaser.Scene {
         this.load.image('tiger_sleep', 'assets/mascot_tiger_08_sleeping.png');
 
         // Maps
+        // Note: Using the spelling 'intigrated' as seen in your file list
         this.load.image('map_flag', 'assets/map_bangladesh_intigrated_with_flag.png'); 
         this.load.image('map_base', 'assets/map_bangladesh_8divisions.png');
 
@@ -52,7 +53,9 @@ class SceneLoad extends Phaser.Scene {
     }
 }
 
-// --- SCENE 2: INTRO ---
+// ==========================================
+// 2. SCENE: INTRO (Welcome Screen)
+// ==========================================
 class SceneIntro extends Phaser.Scene {
     constructor() { super('SceneIntro'); }
 
@@ -68,7 +71,7 @@ class SceneIntro extends Phaser.Scene {
         // Flag Map
         let flagMap = this.add.image(550, 250, 'map_flag').setScale(0.45);
         
-        // Animation
+        // Pulse Animation
         this.tweens.add({
             targets: flagMap,
             scale: 0.48,
@@ -78,7 +81,7 @@ class SceneIntro extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // Text
+        // Title
         this.add.text(400, 50, "Welcome to Bangladesh!", {
             fontFamily: 'Arial', fontSize: '32px', color: '#006a4e', fontStyle: 'bold'
         }).setOrigin(0.5);
@@ -95,7 +98,9 @@ class SceneIntro extends Phaser.Scene {
     }
 }
 
-// --- SCENE 3: LEVEL 1 ---
+// ==========================================
+// 3. SCENE: LEVEL 1 (The Game)
+// ==========================================
 class SceneLevel1 extends Phaser.Scene {
     constructor() { super('SceneLevel1'); }
 
@@ -148,7 +153,7 @@ class SceneLevel1 extends Phaser.Scene {
 }
 
 // ==========================================
-// 2. CONFIGURE THE GAME LAST (After Classes)
+// 4. CONFIGURATION (MUST BE AT THE BOTTOM)
 // ==========================================
 const config = {
     type: Phaser.AUTO,
@@ -156,7 +161,7 @@ const config = {
     height: 450,
     parent: 'game-container',
     backgroundColor: '#ffffff',
-    scene: [SceneLoad, SceneIntro, SceneLevel1], // Now SceneLoad exists!
+    scene: [SceneLoad, SceneIntro, SceneLevel1], // Defined above, so now it works!
     scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH

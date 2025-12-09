@@ -14,15 +14,32 @@ const config = {
 
 const game = new Phaser.Game(config);
 
-// --- SCENE 1: LOADER (Loads your specific PNGs) ---
+// --- SCENE 1: LOADER ---
 class SceneLoad extends Phaser.Scene {
     constructor() { super('SceneLoad'); }
 
     preload() {
-        // Visual Loading Text
-        let loadingText = this.add.text(400, 225, "Loading Assets...", { fontSize: '24px', fill: '#000' }).setOrigin(0.5);
+        // 1. Loading Text
+        let loadingText = this.add.text(400, 200, "Loading...", { 
+            fontSize: '24px', fill: '#000' 
+        }).setOrigin(0.5);
 
-        // 1. MASCOTS (Updated to .png)
+        let errorText = this.add.text(400, 300, "", { 
+            fontSize: '16px', fill: '#ff0000', wordWrap: { width: 600 } 
+        }).setOrigin(0.5);
+
+        // 2. ERROR HANDLER (This tells you what is wrong!)
+        this.load.on('loaderror', function (file) {
+            errorText.setText("MISSING FILE: " + file.key + "\nCheck filename on GitHub!");
+            console.log("Failed to load: " + file.src);
+        });
+
+        // 3. LOAD ASSETS (All .png now)
+        // Make sure these filenames match GitHub EXACTLY (Capital letters matter!)
+        
+        this.load.image('logo', 'assets/logo.png'); // Updated Logo
+
+        // Mascots
         this.load.image('tiger_idle', 'assets/mascot_tiger_01_idle.png');
         this.load.image('tiger_talk', 'assets/mascot_tiger_02_talking.png');
         this.load.image('tiger_happy', 'assets/mascot_tiger_03_happy.png');
@@ -32,11 +49,11 @@ class SceneLoad extends Phaser.Scene {
         this.load.image('tiger_jump', 'assets/mascot_tiger_07_jumping.png');
         this.load.image('tiger_sleep', 'assets/mascot_tiger_08_sleeping.png');
 
-        // 2. MAPS - FULL & FLAG
+        // Maps (Note: I kept your spelling 'intigrated' just in case)
         this.load.image('map_flag', 'assets/map_bangladesh_intigrated_with_flag.png'); 
         this.load.image('map_base', 'assets/map_bangladesh_8divisions.png');
 
-        // 3. MAPS - INDIVIDUAL DIVISIONS (Puzzle Pieces)
+        // Division Pieces
         this.load.image('div_barisal', 'assets/map_division_barisal.png');
         this.load.image('div_chittagong', 'assets/map_division_chittagong.png');
         this.load.image('div_dhaka', 'assets/map_division_dhaka.png');
@@ -45,29 +62,30 @@ class SceneLoad extends Phaser.Scene {
         this.load.image('div_rajshahi', 'assets/map_division_rajshahi.png');
         this.load.image('div_rangpur', 'assets/map_division_rangpur.png');
         this.load.image('div_sylhet', 'assets/map_division_sylhet.png');
-        
-        // Note: Using text for logo if image is missing, or add 'logo.png' to assets if you have it.
     }
 
     create() {
+        // Only start if no errors, but we push through for testing
         this.scene.start('SceneIntro');
     }
 }
 
-// --- SCENE 2: INTRO (Level 0 - Discovery) ---
+// --- SCENE 2: INTRO ---
 class SceneIntro extends Phaser.Scene {
     constructor() { super('SceneIntro'); }
 
     create() {
         this.cameras.main.setBackgroundColor('#E0F7FA');
 
-        // 1. The Waving Tiger
-        let tiger = this.add.image(150, 250, 'tiger_wave').setScale(0.4);
+        // LOGO (Top Left)
+        this.add.image(100, 60, 'logo').setScale(0.15); // Adjusted size
 
-        // 2. The Flag Map (Your new integrated image)
-        let flagMap = this.add.image(500, 225, 'map_flag').setScale(0.45);
+        // Waving Tiger
+        let tiger = this.add.image(150, 300, 'tiger_wave').setScale(0.4);
+
+        // Flag Map
+        let flagMap = this.add.image(550, 250, 'map_flag').setScale(0.45);
         
-        // Make the map "breathe" (pulse animation)
         this.tweens.add({
             targets: flagMap,
             scale: 0.48,
@@ -77,16 +95,15 @@ class SceneIntro extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // 3. Play Button / Instruction
+        // Title
         let titleText = this.add.text(400, 50, "Welcome to Bangladesh!", {
             fontFamily: 'Arial', fontSize: '32px', color: '#006a4e', fontStyle: 'bold'
         }).setOrigin(0.5);
         
-        let subText = this.add.text(400, 90, "(Click the Map to Play)", {
-            fontFamily: 'Arial', fontSize: '20px', color: '#f42a41'
+        let subText = this.add.text(550, 400, "Click the Map to Play!", {
+            fontFamily: 'Arial', fontSize: '24px', color: '#f42a41', backgroundColor: '#ffffff', padding: {x:10, y:5}
         }).setOrigin(0.5);
 
-        // 4. Interaction
         flagMap.setInteractive();
         flagMap.on('pointerdown', () => {
             this.scene.start('SceneLevel1');
@@ -94,63 +111,55 @@ class SceneIntro extends Phaser.Scene {
     }
 }
 
-// --- SCENE 3: LEVEL 1 (Puzzle Game) ---
+// --- SCENE 3: LEVEL 1 ---
 class SceneLevel1 extends Phaser.Scene {
     constructor() { super('SceneLevel1'); }
 
     create() {
-        // UI Setup
+        // UI
+        this.add.image(80, 50, 'logo').setScale(0.12);
         let tiger = this.add.image(700, 380, 'tiger_talk').setScale(0.25);
+        
         let instruction = this.add.text(400, 40, "Drag DHAKA to the map!", { 
             fontSize: '28px', color: '#000', backgroundColor: '#ffffff', padding: { x: 10, y: 5 }
         }).setOrigin(0.5);
 
-        // 1. The Base Map (Grey/Faded background guide)
+        // Base Map (Guide)
         let baseMap = this.add.image(400, 240, 'map_base').setScale(0.4).setAlpha(0.25);
 
-        // 2. The Puzzle Piece (Using Dhaka for this test)
-        // Note: For a real puzzle, we would spawn all 8. Here is one example.
+        // Puzzle Piece (Dhaka)
         let piece = this.add.image(150, 240, 'div_dhaka').setScale(0.15).setInteractive();
         this.input.setDraggable(piece);
 
-        // 3. Logic: Make it draggable
+        // Drag Logic
         this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
             gameObject.x = dragX;
             gameObject.y = dragY;
         });
 
-        // 4. Logic: Drop Zone
+        // Drop Logic
         this.input.on('dragend', function (pointer, gameObject) {
-            // "Win Zone" coordinates (Approximate center for Dhaka on the base map)
-            // You may need to tweak these numbers based on how the images align
             let correctX = 400; 
             let correctY = 240;
-            let tolerance = 60; // How close they need to get
+            let tolerance = 60;
 
             if (Math.abs(gameObject.x - correctX) < tolerance && Math.abs(gameObject.y - correctY) < tolerance) {
-                // SUCCESS
                 gameObject.x = correctX;
                 gameObject.y = correctY;
                 gameObject.disableInteractive();
                 
-                // Mascot Reaction
                 tiger.setTexture('tiger_happy');
                 instruction.setText("Good Job! That is Dhaka.");
                 instruction.setStyle({ color: 'green' });
 
-                // Success Sound/Effect could go here
-
             } else {
-                // FAILURE - Reset Position
                 gameObject.x = 150;
                 gameObject.y = 240;
                 
-                // Mascot Reaction
                 tiger.setTexture('tiger_sad');
                 instruction.setText("Try again!");
                 instruction.setStyle({ color: 'red' });
                 
-                // Reset mascot face after 2 seconds
                 scene.time.delayedCall(2000, () => {
                     tiger.setTexture('tiger_talk');
                     instruction.setText("Drag DHAKA to the map!");
@@ -159,6 +168,6 @@ class SceneLevel1 extends Phaser.Scene {
             }
         });
 
-        let scene = this; // Reference for the delayed call
+        let scene = this; 
     }
 }

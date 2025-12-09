@@ -1,19 +1,3 @@
-// CONFIGURATION
-const config = {
-    type: Phaser.AUTO,
-    width: 800,
-    height: 450,
-    parent: 'game-container',
-    backgroundColor: '#ffffff',
-    scene: [SceneLoad, SceneIntro, SceneLevel1],
-    scale: {
-        mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.CENTER_BOTH
-    }
-};
-
-const game = new Phaser.Game(config);
-
 // --- SCENE 1: LOADER ---
 class SceneLoad extends Phaser.Scene {
     constructor() { super('SceneLoad'); }
@@ -24,48 +8,42 @@ class SceneLoad extends Phaser.Scene {
             fontSize: '24px', fill: '#000' 
         }).setOrigin(0.5);
 
-        let errorText = this.add.text(400, 300, "", { 
-            fontSize: '16px', fill: '#ff0000', wordWrap: { width: 600 } 
-        }).setOrigin(0.5);
-
-        // 2. ERROR HANDLER (This tells you what is wrong!)
+        // 2. ERROR HANDLER (This will help us if something is still wrong)
         this.load.on('loaderror', function (file) {
-            errorText.setText("MISSING FILE: " + file.key + "\nCheck filename on GitHub!");
             console.log("Failed to load: " + file.src);
         });
 
-        // 3. LOAD ASSETS (All .png now)
-        // Make sure these filenames match GitHub EXACTLY (Capital letters matter!)
+        // 3. LOAD ASSETS (Removed 'assets/' prefix)
+        // Make sure your files on GitHub match these names EXACTLY!
         
-        this.load.image('logo', 'assets/logo.png'); // Updated Logo
+        this.load.image('logo', 'logo.png'); 
 
         // Mascots
-        this.load.image('tiger_idle', 'assets/mascot_tiger_01_idle.png');
-        this.load.image('tiger_talk', 'assets/mascot_tiger_02_talking.png');
-        this.load.image('tiger_happy', 'assets/mascot_tiger_03_happy.png');
-        this.load.image('tiger_sad', 'assets/mascot_tiger_04_sad.png');
-        this.load.image('tiger_surprised', 'assets/mascot_tiger_05_surprised.png');
-        this.load.image('tiger_wave', 'assets/mascot_tiger_06_waving.png');
-        this.load.image('tiger_jump', 'assets/mascot_tiger_07_jumping.png');
-        this.load.image('tiger_sleep', 'assets/mascot_tiger_08_sleeping.png');
+        this.load.image('tiger_idle', 'mascot_tiger_01_idle.png');
+        this.load.image('tiger_talk', 'mascot_tiger_02_talking.png');
+        this.load.image('tiger_happy', 'mascot_tiger_03_happy.png');
+        this.load.image('tiger_sad', 'mascot_tiger_04_sad.png');
+        this.load.image('tiger_surprised', 'mascot_tiger_05_surprised.png');
+        this.load.image('tiger_wave', 'mascot_tiger_06_waving.png');
+        this.load.image('tiger_jump', 'mascot_tiger_07_jumping.png');
+        this.load.image('tiger_sleep', 'mascot_tiger_08_sleeping.png');
 
-        // Maps (Note: I kept your spelling 'intigrated' just in case)
-        this.load.image('map_flag', 'assets/map_bangladesh_intigrated_with_flag.png'); 
-        this.load.image('map_base', 'assets/map_bangladesh_8divisions.png');
+        // Maps
+        this.load.image('map_flag', 'map_bangladesh_intigrated_with_flag.png'); 
+        this.load.image('map_base', 'map_bangladesh_8divisions.png');
 
         // Division Pieces
-        this.load.image('div_barisal', 'assets/map_division_barisal.png');
-        this.load.image('div_chittagong', 'assets/map_division_chittagong.png');
-        this.load.image('div_dhaka', 'assets/map_division_dhaka.png');
-        this.load.image('div_khulna', 'assets/map_division_khulna.png');
-        this.load.image('div_mymensingh', 'assets/map_division_mymensingh.png');
-        this.load.image('div_rajshahi', 'assets/map_division_rajshahi.png');
-        this.load.image('div_rangpur', 'assets/map_division_rangpur.png');
-        this.load.image('div_sylhet', 'assets/map_division_sylhet.png');
+        this.load.image('div_barisal', 'map_division_barisal.png');
+        this.load.image('div_chittagong', 'map_division_chittagong.png');
+        this.load.image('div_dhaka', 'map_division_dhaka.png');
+        this.load.image('div_khulna', 'map_division_khulna.png');
+        this.load.image('div_mymensingh', 'map_division_mymensingh.png');
+        this.load.image('div_rajshahi', 'map_division_rajshahi.png');
+        this.load.image('div_rangpur', 'map_division_rangpur.png');
+        this.load.image('div_sylhet', 'map_division_sylhet.png');
     }
 
     create() {
-        // Only start if no errors, but we push through for testing
         this.scene.start('SceneIntro');
     }
 }
@@ -77,8 +55,8 @@ class SceneIntro extends Phaser.Scene {
     create() {
         this.cameras.main.setBackgroundColor('#E0F7FA');
 
-        // LOGO (Top Left)
-        this.add.image(100, 60, 'logo').setScale(0.15); // Adjusted size
+        // Logo
+        this.add.image(100, 60, 'logo').setScale(0.15);
 
         // Waving Tiger
         let tiger = this.add.image(150, 300, 'tiger_wave').setScale(0.4);
@@ -160,14 +138,30 @@ class SceneLevel1 extends Phaser.Scene {
                 instruction.setText("Try again!");
                 instruction.setStyle({ color: 'red' });
                 
-                scene.time.delayedCall(2000, () => {
+                // Reset mascot face after 2 seconds
+                let scene = this.scene; // Capture scene reference
+                this.scene.time.delayedCall(2000, () => {
                     tiger.setTexture('tiger_talk');
                     instruction.setText("Drag DHAKA to the map!");
                     instruction.setStyle({ color: 'black' });
                 });
             }
         });
-
-        let scene = this; 
     }
 }
+
+// --- CONFIGURATION ---
+const config = {
+    type: Phaser.AUTO,
+    width: 800,
+    height: 450,
+    parent: 'game-container',
+    backgroundColor: '#ffffff',
+    scene: [SceneLoad, SceneIntro, SceneLevel1],
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH
+    }
+};
+
+const game = new Phaser.Game(config);

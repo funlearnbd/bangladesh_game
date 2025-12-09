@@ -2,13 +2,1544 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FunLearnBD - Map Game</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🇧🇩 Bangladesh Map Puzzle - FunLearnBD</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+Da+2:wght@400;600;700;800&family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00a86b;
+            --primary-dark: #006b45;
+            --secondary: #f4511e;
+            --accent: #ffd700;
+            --bg-gradient: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 50%, #a5d6a7 100%);
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --shadow: 0 8px 32px rgba(0, 107, 69, 0.2);
+            --shadow-hover: 0 12px 48px rgba(0, 107, 69, 0.3);
+            --text-dark: #1a472a;
+            --text-light: #4a7c59;
+            --success: #4caf50;
+            --locked: #9e9e9e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Baloo Da 2', 'Hind Siliguri', sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            overflow-x: hidden;
+            color: var(--text-dark);
+        }
+
+        /* Animated Background */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .floating-shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .floating-shape:nth-child(1) { top: 10%; left: 10%; animation-delay: 0s; }
+        .floating-shape:nth-child(2) { top: 20%; right: 15%; animation-delay: -5s; }
+        .floating-shape:nth-child(3) { bottom: 30%; left: 20%; animation-delay: -10s; }
+        .floating-shape:nth-child(4) { bottom: 20%; right: 10%; animation-delay: -15s; }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(5deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(20px) rotate(-5deg); }
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            position: relative;
+            z-index: 100;
+        }
+
+        .header-title {
+            color: white;
+            font-size: 1.3em;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-title .flag {
+            font-size: 1.5em;
+        }
+
+        .lang-selector {
+            display: flex;
+            gap: 8px;
+        }
+
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .lang-btn.active {
+            background: white;
+            color: var(--primary-dark);
+            border-color: white;
+            transform: scale(1.05);
+        }
+
+        .lang-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Back Button */
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        /* Main Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Screen Management */
+        .screen {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Main Menu */
+        .menu-hero {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .menu-hero h1 {
+            font-size: 2.2em;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .menu-hero p {
+            font-size: 1.1em;
+            color: var(--text-light);
+            max-width: 400px;
+            margin: 0 auto 30px;
+        }
+
+        .mascot-container {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+        }
+
+        .mascot {
+            width: 100%;
+            height: 100%;
+            font-size: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            max-width: 350px;
+            margin: 0 auto;
+        }
+
+        .menu-btn {
+            background: var(--card-bg);
+            border: 3px solid var(--primary);
+            border-radius: 20px;
+            padding: 20px 25px;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--primary-dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+        }
+
+        .menu-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+            background: var(--primary);
+            color: white;
+        }
+
+        .menu-btn .icon {
+            font-size: 1.5em;
+        }
+
+        .menu-btn.locked {
+            border-color: var(--locked);
+            color: var(--locked);
+            cursor: not-allowed;
+        }
+
+        .menu-btn.locked:hover {
+            transform: none;
+            background: var(--card-bg);
+            color: var(--locked);
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: var(--shadow);
+        }
+
+        .progress-title {
+            font-size: 1em;
+            color: var(--text-light);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Level Selection Grid */
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px 0;
+        }
+
+        .level-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .level-card:hover:not(.locked) {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .level-card.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .level-card.locked::after {
+            content: '🔒';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            z-index: 10;
+        }
+
+        .level-card.completed {
+            border: 4px solid var(--success);
+        }
+
+        .level-card.completed::before {
+            content: '✓';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--success);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            z-index: 5;
+        }
+
+        .level-image {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+            padding: 15px;
+        }
+
+        .level-info {
+            padding: 15px 20px;
+        }
+
+        .level-name {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 5px;
+        }
+
+        .level-districts {
+            font-size: 0.9em;
+            color: var(--text-light);
+        }
+
+        /* Puzzle Game Area */
+        .puzzle-area {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-height: calc(100vh - 200px);
+        }
+
+        .puzzle-header {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+        }
+
+        .puzzle-info h2 {
+            font-size: 1.4em;
+            color: var(--primary-dark);
+            margin-bottom: 5px;
+        }
+
+        .puzzle-stats {
+            font-size: 0.95em;
+            color: var(--text-light);
+        }
+
+        .puzzle-timer {
+            font-size: 1.8em;
+            font-weight: 800;
+            color: var(--secondary);
+            background: rgba(244, 81, 30, 0.1);
+            padding: 10px 20px;
+            border-radius: 15px;
+        }
+
+        .puzzle-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .puzzle-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .drop-zone {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+            min-height: 300px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drop-zone-title {
+            font-size: 1em;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 15px;
+        }
+
+        .drop-zone-map {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            align-content: flex-start;
+            padding: 10px;
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border-radius: 15px;
+            border: 3px dashed var(--primary);
+            min-height: 250px;
+        }
+
+        .drop-zone-map > img {
+            display: none;
+        }
+
+        #placedPiecesContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            align-content: flex-start;
+            width: 100%;
+        }
+
+        .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            min-height: 200px;
+            color: var(--primary);
+            font-size: 1.1em;
+            font-weight: 600;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        .empty-state.hidden {
+            display: none;
+        }
+
+        .piece-bank {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .piece-bank-title {
+            font-size: 1em;
+            font-weight: 600;
+            color: var(--text-light);
+            margin-bottom: 15px;
+        }
+
+        .pieces-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .puzzle-piece {
+            background: white;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 10px;
+            cursor: grab;
+            transition: all 0.3s ease;
+            user-select: none;
+            touch-action: none;
+        }
+
+        .puzzle-piece:hover {
+            border-color: var(--primary);
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .puzzle-piece.dragging {
+            opacity: 0.8;
+            transform: scale(1.1);
+            z-index: 1000;
+        }
+
+        .puzzle-piece.placed {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .puzzle-piece img {
+            width: 80px;
+            height: 60px;
+            object-fit: contain;
+        }
+
+        .puzzle-piece-name {
+            text-align: center;
+            font-size: 0.8em;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-top: 5px;
+        }
+
+        /* Placed pieces on map */
+        .placed-piece {
+            background: white;
+            border-radius: 12px;
+            padding: 8px;
+            box-shadow: 0 4px 12px rgba(0, 107, 69, 0.2);
+            animation: placeIn 0.5s ease;
+            border: 3px solid var(--success);
+            text-align: center;
+        }
+
+        .placed-piece img {
+            width: 70px;
+            height: 50px;
+            object-fit: contain;
+        }
+
+        .placed-piece-name {
+            font-size: 0.7em;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-top: 4px;
+        }
+
+        @keyframes placeIn {
+            0% { transform: scale(1.3); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Learning Mode */
+        .learn-card {
+            background: var(--card-bg);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            text-align: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .learn-image {
+            width: 100%;
+            max-width: 350px;
+            margin: 0 auto 20px;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .learn-image img {
+            width: 100%;
+        }
+
+        .learn-name {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+        }
+
+        .learn-name-secondary {
+            font-size: 1.3em;
+            color: var(--text-light);
+            margin-bottom: 20px;
+        }
+
+        .learn-fact {
+            background: linear-gradient(135deg, #fff9c4, #fff59d);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid var(--accent);
+        }
+
+        .learn-fact-title {
+            font-size: 0.9em;
+            font-weight: 700;
+            color: #f57f17;
+            margin-bottom: 8px;
+        }
+
+        .learn-fact-text {
+            font-size: 1em;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+
+        .speak-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 168, 107, 0.3);
+        }
+
+        .speak-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 168, 107, 0.4);
+        }
+
+        .speak-btn:active {
+            transform: scale(0.95);
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .nav-btn {
+            background: white;
+            border: 3px solid var(--primary);
+            color: var(--primary);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        /* Success Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 30px;
+            padding: 40px;
+            text-align: center;
+            max-width: 400px;
+            margin: 20px;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: celebrate 0.5s ease;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(0) rotate(-180deg); }
+            50% { transform: scale(1.2) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        .modal h2 {
+            font-size: 2em;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+        }
+
+        .modal p {
+            color: var(--text-light);
+            margin-bottom: 25px;
+        }
+
+        .modal-stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 25px;
+        }
+
+        .modal-stat {
+            text-align: center;
+        }
+
+        .modal-stat-value {
+            font-size: 2em;
+            font-weight: 800;
+            color: var(--secondary);
+        }
+
+        .modal-stat-label {
+            font-size: 0.85em;
+            color: var(--text-light);
+        }
+
+        .modal-btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            top: -10px;
+            z-index: 1001;
+            animation: confettiFall 3s ease-out forwards;
+        }
+
+        @keyframes confettiFall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .header-title {
+                font-size: 1em;
+            }
+            
+            .lang-btn {
+                padding: 6px 10px;
+                font-size: 0.75em;
+            }
+            
+            .menu-hero h1 {
+                font-size: 1.6em;
+            }
+            
+            .puzzle-piece img {
+                width: 60px;
+                height: 45px;
+            }
+            
+            .puzzle-timer {
+                font-size: 1.3em;
+                padding: 8px 15px;
+            }
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--primary-dark);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Section Title */
+        .section-title {
+            font-size: 1.8em;
+            color: var(--primary-dark);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 25px;
+        }
+    </style>
 </head>
 <body>
-    <div id="game-container"></div>
-    <script src="game.js"></script>
+    <!-- Background Decoration -->
+    <div class="bg-decoration">
+        <div class="floating-shape" style="font-size: 100px;">🇧🇩</div>
+        <div class="floating-shape" style="font-size: 80px;">🗺️</div>
+        <div class="floating-shape" style="font-size: 90px;">🧩</div>
+        <div class="floating-shape" style="font-size: 70px;">⭐</div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <button class="back-btn" id="backBtn" style="visibility: hidden;">←</button>
+        <div class="header-title">
+            <span class="flag">🇧🇩</span>
+            <span data-lang-en="Map Puzzle" data-lang-bn="মানচিত্র ধাঁধা" data-lang-ar="لغز الخريطة">Map Puzzle</span>
+        </div>
+        <div class="lang-selector">
+            <button class="lang-btn active" data-lang="en">EN</button>
+            <button class="lang-btn" data-lang="bn">বাং</button>
+            <button class="lang-btn" data-lang="ar">ع</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Screen: Main Menu -->
+        <div class="screen active" id="menuScreen">
+            <div class="menu-hero">
+                <div class="mascot-container">
+                    <div class="mascot">🐯</div>
+                </div>
+                <h1 data-lang-en="Learn Bangladesh!" data-lang-bn="বাংলাদেশ শিখো!" data-lang-ar="تعلم بنغلاديش!">Learn Bangladesh!</h1>
+                <p data-lang-en="Discover all 8 divisions and 64 districts through fun puzzles!" data-lang-bn="মজার ধাঁধার মাধ্যমে ৮টি বিভাগ ও ৬৪টি জেলা আবিষ্কার করো!" data-lang-ar="اكتشف 8 أقسام و64 منطقة من خلال الألغاز الممتعة!">Discover all 8 divisions and 64 districts through fun puzzles!</p>
+                
+                <div class="menu-buttons">
+                    <button class="menu-btn" onclick="startGame('divisions')">
+                        <span data-lang-en="🧩 Division Puzzle" data-lang-bn="🧩 বিভাগের ধাঁধা" data-lang-ar="🧩 لغز الأقسام">🧩 Division Puzzle</span>
+                        <span class="icon">→</span>
+                    </button>
+                    <button class="menu-btn" id="districtBtn" onclick="showDistrictLevels()">
+                        <span data-lang-en="🗺️ District Puzzles" data-lang-bn="🗺️ জেলার ধাঁধা" data-lang-ar="🗺️ ألغاز المناطق">🗺️ District Puzzles</span>
+                        <span class="icon">→</span>
+                    </button>
+                    <button class="menu-btn" onclick="startLearnMode('divisions')">
+                        <span data-lang-en="📚 Learn Mode" data-lang-bn="📚 শেখার মোড" data-lang-ar="📚 وضع التعلم">📚 Learn Mode</span>
+                        <span class="icon">→</span>
+                    </button>
+                </div>
+
+                <div class="progress-section">
+                    <div class="progress-title">
+                        <span data-lang-en="Overall Progress" data-lang-bn="সার্বিক অগ্রগতি" data-lang-ar="التقدم الكلي">Overall Progress</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen: District Level Selection -->
+        <div class="screen" id="districtLevelsScreen">
+            <h2 class="section-title" data-lang-en="Choose a Division" data-lang-bn="একটি বিভাগ বেছে নাও" data-lang-ar="اختر قسمًا">Choose a Division</h2>
+            <p class="section-subtitle" data-lang-en="Complete division puzzle first to unlock!" data-lang-bn="আনলক করতে প্রথমে বিভাগের ধাঁধা সম্পূর্ণ করো!" data-lang-ar="أكمل لغز القسم أولاً لفتحه!">Complete division puzzle first to unlock!</p>
+            <div class="level-grid" id="districtLevelGrid"></div>
+        </div>
+
+        <!-- Screen: Puzzle Game -->
+        <div class="screen" id="puzzleScreen">
+            <div class="puzzle-area">
+                <div class="puzzle-header">
+                    <div class="puzzle-info">
+                        <h2 id="puzzleTitle">Division Puzzle</h2>
+                        <div class="puzzle-stats">
+                            <span id="puzzleStats">0 / 8 pieces placed</span>
+                        </div>
+                    </div>
+                    <div class="puzzle-timer" id="puzzleTimer">00:00</div>
+                </div>
+                
+                <div class="puzzle-container">
+                    <div class="drop-zone">
+                        <span class="drop-zone-title" data-lang-en="✅ Placed Pieces" data-lang-bn="✅ বসানো টুকরো" data-lang-ar="✅ القطع الموضوعة">✅ Placed Pieces</span>
+                        <div class="drop-zone-map" id="dropZoneMap">
+                            <div id="placedPiecesContainer"></div>
+                            <div id="emptyState" class="empty-state">
+                                <span data-lang-en="Tap pieces to place them here!" data-lang-bn="টুকরো ট্যাপ করে এখানে বসাও!" data-lang-ar="اضغط على القطع لوضعها هنا!">Tap pieces to place them here!</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="piece-bank">
+                        <span class="piece-bank-title" data-lang-en="Puzzle Pieces" data-lang-bn="ধাঁধার টুকরো" data-lang-ar="قطع اللغز">Puzzle Pieces</span>
+                        <div class="pieces-grid" id="piecesGrid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen: Learn Mode -->
+        <div class="screen" id="learnScreen">
+            <div class="learn-card" id="learnCard">
+                <div class="learn-image">
+                    <img src="" alt="Learn Image" id="learnImage">
+                </div>
+                <div class="learn-name" id="learnName">Dhaka</div>
+                <div class="learn-name-secondary" id="learnNameSecondary">ঢাকা</div>
+                
+                <div class="learn-fact" id="learnFact">
+                    <div class="learn-fact-title" data-lang-en="🌟 Fun Fact" data-lang-bn="🌟 মজার তথ্য" data-lang-ar="🌟 حقيقة ممتعة">🌟 Fun Fact</div>
+                    <div class="learn-fact-text" id="learnFactText"></div>
+                </div>
+                
+                <button class="speak-btn" onclick="speakCurrent()">
+                    <span>🔊</span>
+                    <span data-lang-en="Listen" data-lang-bn="শোনো" data-lang-ar="استمع">Listen</span>
+                </button>
+                
+                <div class="nav-buttons">
+                    <button class="nav-btn" id="prevBtn" onclick="navigateLearn(-1)">←</button>
+                    <button class="nav-btn" id="nextBtn" onclick="navigateLearn(1)">→</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal-overlay" id="successModal">
+        <div class="modal">
+            <div class="modal-icon">🎉</div>
+            <h2 data-lang-en="Amazing!" data-lang-bn="অসাধারণ!" data-lang-ar="مذهل!">Amazing!</h2>
+            <p id="modalMessage" data-lang-en="You completed the puzzle!" data-lang-bn="তুমি ধাঁধাটি সম্পূর্ণ করেছ!" data-lang-ar="لقد أكملت اللغز!">You completed the puzzle!</p>
+            <div class="modal-stats">
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="modalTime">00:00</div>
+                    <div class="modal-stat-label" data-lang-en="Time" data-lang-bn="সময়" data-lang-ar="الوقت">Time</div>
+                </div>
+                <div class="modal-stat">
+                    <div class="modal-stat-value" id="modalStars">⭐⭐⭐</div>
+                    <div class="modal-stat-label" data-lang-en="Stars" data-lang-bn="তারা" data-lang-ar="النجوم">Stars</div>
+                </div>
+            </div>
+            <button class="modal-btn" onclick="closeModal()">
+                <span data-lang-en="Continue" data-lang-bn="চালিয়ে যাও" data-lang-ar="استمر">Continue</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===== GAME DATA =====
+        const DIVISIONS = [
+            { id: 'dhaka', name: { en: 'Dhaka', bn: 'ঢাকা', ar: 'دكا' }, image: 'images/map_division_dhaka.png', districts: 13, position: { top: '35%', left: '45%', width: '22%' } },
+            { id: 'chittagong', name: { en: 'Chittagong', bn: 'চট্টগ্রাম', ar: 'شيتاغونغ' }, image: 'images/map_division_chittagong.png', districts: 11, position: { top: '40%', left: '68%', width: '32%' } },
+            { id: 'rajshahi', name: { en: 'Rajshahi', bn: 'রাজশাহী', ar: 'راجشاهي' }, image: 'images/map_division_rajshahi.png', districts: 8, position: { top: '30%', left: '5%', width: '28%' } },
+            { id: 'khulna', name: { en: 'Khulna', bn: 'খুলনা', ar: 'خولنا' }, image: 'images/map_division_khulna.png', districts: 10, position: { top: '55%', left: '8%', width: '30%' } },
+            { id: 'barisal', name: { en: 'Barisal', bn: 'বরিশাল', ar: 'باريسال' }, image: 'images/map_division_barisal.png', districts: 6, position: { top: '58%', left: '38%', width: '22%' } },
+            { id: 'sylhet', name: { en: 'Sylhet', bn: 'সিলেট', ar: 'سيلهت' }, image: 'images/map_division_sylhet.png', districts: 4, position: { top: '18%', left: '70%', width: '20%' } },
+            { id: 'rangpur', name: { en: 'Rangpur', bn: 'রংপুর', ar: 'رانغبور' }, image: 'images/map_division_rangpur.png', districts: 8, position: { top: '2%', left: '12%', width: '30%' } },
+            { id: 'mymensingh', name: { en: 'Mymensingh', bn: 'ময়মনসিংহ', ar: 'ميمنسينغ' }, image: 'images/map_division_mymensingh.png', districts: 4, position: { top: '18%', left: '42%', width: '22%' } }
+        ];
+
+        const DISTRICTS = {
+            dhaka: [
+                { id: 'dhaka_city', name: { en: 'Dhaka', bn: 'ঢাকা', ar: 'دكا' }, fact: { en: 'Capital city of Bangladesh with over 20 million people!', bn: 'বাংলাদেশের রাজধানী, ২ কোটিরও বেশি মানুষের বাস!', ar: 'عاصمة بنغلاديش بأكثر من 20 مليون نسمة!' } },
+                { id: 'gazipur', name: { en: 'Gazipur', bn: 'গাজীপুর', ar: 'غازيبور' }, fact: { en: 'Home to Bhawal National Park and many garment factories.', bn: 'ভাওয়াল জাতীয় উদ্যান এবং অনেক গার্মেন্টস কারখানার জায়গা।', ar: 'موطن حديقة بهاوال الوطنية والعديد من مصانع الملابس.' } },
+                { id: 'tangail', name: { en: 'Tangail', bn: 'টাঙ্গাইল', ar: 'تانغايل' }, fact: { en: 'Famous for Tangail Saree and Madhupur Jungle.', bn: 'টাঙ্গাইল শাড়ি এবং মধুপুর জঙ্গলের জন্য বিখ্যাত।', ar: 'مشهورة بساري تانغايل وغابة مادهوبور.' } },
+                { id: 'kishoreganj', name: { en: 'Kishoreganj', bn: 'কিশোরগঞ্জ', ar: 'كيشورغانج' }, fact: { en: 'Land of Haors (wetlands) and beautiful natural scenery.', bn: 'হাওড়ের দেশ এবং সুন্দর প্রাকৃতিক দৃশ্যের জায়গা।', ar: 'أرض الأراضي الرطبة والمناظر الطبيعية الجميلة.' } },
+                { id: 'manikganj', name: { en: 'Manikganj', bn: 'মানিকগঞ্জ', ar: 'مانيكغانج' }, fact: { en: 'Historic district with ancient temples and mosques.', bn: 'প্রাচীন মন্দির ও মসজিদ সমৃদ্ধ ঐতিহাসিক জেলা।', ar: 'منطقة تاريخية بها معابد ومساجد قديمة.' } },
+                { id: 'munshiganj', name: { en: 'Munshiganj', bn: 'মুন্সিগঞ্জ', ar: 'مونشيغانج' }, fact: { en: 'Known as the land of potatoes in Bangladesh!', bn: 'বাংলাদেশের আলুর দেশ হিসেবে পরিচিত!', ar: 'معروفة بأرض البطاطا في بنغلاديش!' } },
+                { id: 'narayanganj', name: { en: 'Narayanganj', bn: 'নারায়ণগঞ্জ', ar: 'ناراينغانج' }, fact: { en: 'Called the "Dundee of the East" for jute mills.', bn: '"প্রাচ্যের ডান্ডি" বলা হয় পাটকলের জন্য।', ar: 'تسمى "داندي الشرق" لمصانع الجوت.' } },
+                { id: 'narsingdi', name: { en: 'Narsingdi', bn: 'নরসিংদী', ar: 'نارسينغدي' }, fact: { en: 'Famous for handloom textiles and Wari-Bateshwar archaeological site.', bn: 'তাঁতের কাপড় এবং ওয়ারী-বটেশ্বর প্রত্নতাত্ত্বিক স্থানের জন্য বিখ্যাত।', ar: 'مشهورة بالمنسوجات اليدوية وموقع واري-باتيشوار الأثري.' } },
+                { id: 'faridpur', name: { en: 'Faridpur', bn: 'ফরিদপুর', ar: 'فريدبور' }, fact: { en: 'Historic town with many freedom fighters\' memorials.', bn: 'অনেক মুক্তিযোদ্ধা স্মৃতিসৌধ সমৃদ্ধ ঐতিহাসিক শহর।', ar: 'مدينة تاريخية بها العديد من نصب مقاتلي الحرية.' } },
+                { id: 'gopalganj', name: { en: 'Gopalganj', bn: 'গোপালগঞ্জ', ar: 'غوبالغانج' }, fact: { en: 'Birthplace of Bangabandhu Sheikh Mujibur Rahman!', bn: 'বঙ্গবন্ধু শেখ মুজিবুর রহমানের জন্মস্থান!', ar: 'مسقط رأس بانغاباندو الشيخ مجيب الرحمن!' } },
+                { id: 'madaripur', name: { en: 'Madaripur', bn: 'মাদারীপুর', ar: 'مداريبور' }, fact: { en: 'Known for river transportation and boat making.', bn: 'নদীপথ পরিবহন এবং নৌকা তৈরির জন্য পরিচিত।', ar: 'معروفة بالنقل النهري وصناعة القوارب.' } },
+                { id: 'rajbari', name: { en: 'Rajbari', bn: 'রাজবাড়ী', ar: 'راجباري' }, fact: { en: 'Named after the palace (Rajbari) of local zamindars.', bn: 'স্থানীয় জমিদারদের প্রাসাদের (রাজবাড়ী) নামে নামকরণ।', ar: 'سميت على اسم قصر (راجباري) للزميندار المحليين.' } },
+                { id: 'shariatpur', name: { en: 'Shariatpur', bn: 'শরীয়তপুর', ar: 'شريعة بور' }, fact: { en: 'Named after religious reformer Haji Shariatullah.', bn: 'ধর্মীয় সংস্কারক হাজী শরীয়তুল্লাহর নামে নামকরণ।', ar: 'سميت على اسم المصلح الديني حاجي شريعة الله.' } }
+            ],
+            chittagong: [
+                { id: 'chittagong_city', name: { en: 'Chittagong', bn: 'চট্টগ্রাম', ar: 'شيتاغونغ' }, fact: { en: 'Largest port city and commercial capital of Bangladesh!', bn: 'বাংলাদেশের বৃহত্তম বন্দর শহর এবং বাণিজ্যিক রাজধানী!', ar: 'أكبر مدينة ميناء والعاصمة التجارية لبنغلاديش!' } },
+                { id: 'coxs_bazar', name: { en: "Cox's Bazar", bn: 'কক্সবাজার', ar: 'كوكس بازار' }, fact: { en: 'Has the longest natural sea beach in the world - 120km!', bn: 'বিশ্বের দীর্ঘতম প্রাকৃতিক সমুদ্র সৈকত - ১২০ কিমি!', ar: 'لديها أطول شاطئ بحري طبيعي في العالم - 120 كم!' } },
+                { id: 'bandarban', name: { en: 'Bandarban', bn: 'বান্দরবান', ar: 'باندربان' }, fact: { en: 'Home to the highest peak Tahjindong (Bijoy) at 1280m!', bn: 'সর্বোচ্চ শৃঙ্গ তাজিংডং (বিজয়) - ১২৮০ মিটার!', ar: 'موطن أعلى قمة تاجيندونغ (بيجوي) على ارتفاع 1280م!' } },
+                { id: 'rangamati', name: { en: 'Rangamati', bn: 'রাঙামাটি', ar: 'رانغاماتي' }, fact: { en: 'Beautiful Kaptai Lake, the largest man-made lake in Bangladesh.', bn: 'সুন্দর কাপ্তাই হ্রদ, বাংলাদেশের বৃহত্তম কৃত্রিম হ্রদ।', ar: 'بحيرة كابتاي الجميلة، أكبر بحيرة صناعية في بنغلاديش.' } },
+                { id: 'khagrachari', name: { en: 'Khagrachari', bn: 'খাগড়াছড়ি', ar: 'خاغراتشاري' }, fact: { en: 'Known as the "Land of Clouds" with beautiful hills.', bn: '"মেঘের দেশ" হিসেবে পরিচিত সুন্দর পাহাড়ের জন্য।', ar: 'معروفة بـ"أرض السحب" مع التلال الجميلة.' } },
+                { id: 'comilla', name: { en: 'Comilla', bn: 'কুমিল্লা', ar: 'كوميلا' }, fact: { en: 'Famous for Rasmalai sweets and Mainamati ruins!', bn: 'রসমালাই মিষ্টি এবং ময়নামতি ধ্বংসাবশেষের জন্য বিখ্যাত!', ar: 'مشهورة بحلوى راسمالاي وآثار ميناماتي!' } },
+                { id: 'brahmanbaria', name: { en: 'Brahmanbaria', bn: 'ব্রাহ্মণবাড়িয়া', ar: 'براهمانباريا' }, fact: { en: 'Known as the cultural capital of Bangladesh!', bn: 'বাংলাদেশের সাংস্কৃতিক রাজধানী হিসেবে পরিচিত!', ar: 'معروفة بالعاصمة الثقافية لبنغلاديش!' } },
+                { id: 'chandpur', name: { en: 'Chandpur', bn: 'চাঁদপুর', ar: 'تشاندبور' }, fact: { en: 'Famous for Hilsa fish, the national fish of Bangladesh!', bn: 'ইলিশ মাছের জন্য বিখ্যাত, বাংলাদেশের জাতীয় মাছ!', ar: 'مشهورة بسمك الهيلسا، السمكة الوطنية لبنغلاديش!' } },
+                { id: 'lakshmipur', name: { en: 'Lakshmipur', bn: 'লক্ষ্মীপুর', ar: 'لاكشميبور' }, fact: { en: 'Important river port district on the Meghna river.', bn: 'মেঘনা নদীর তীরে গুরুত্বপূর্ণ নদী বন্দর জেলা।', ar: 'منطقة ميناء نهري مهمة على نهر ميغنا.' } },
+                { id: 'noakhali', name: { en: 'Noakhali', bn: 'নোয়াখালী', ar: 'نواخالي' }, fact: { en: 'Known for unique dialect and vast char lands.', bn: 'অনন্য উপভাষা এবং বিস্তীর্ণ চর এলাকার জন্য পরিচিত।', ar: 'معروفة باللهجة الفريدة والأراضي الرسوبية الشاسعة.' } },
+                { id: 'feni', name: { en: 'Feni', bn: 'ফেনী', ar: 'فيني' }, fact: { en: 'Named after the Feni River, a peaceful district.', bn: 'ফেনী নদীর নামে নামকরণ, একটি শান্তিপূর্ণ জেলা।', ar: 'سميت على اسم نهر فيني، منطقة هادئة.' } }
+            ],
+            rajshahi: [
+                { id: 'rajshahi_city', name: { en: 'Rajshahi', bn: 'রাজশাহী', ar: 'راجشاهي' }, fact: { en: 'Called the "Silk City" and famous for mangoes!', bn: '"সিল্ক সিটি" নামে পরিচিত এবং আমের জন্য বিখ্যাত!', ar: 'تسمى "مدينة الحرير" ومشهورة بالمانجو!' } },
+                { id: 'bogra', name: { en: 'Bogra', bn: 'বগুড়া', ar: 'بوغرا' }, fact: { en: 'Home to Mahasthangarh, oldest archaeological site in Bangladesh!', bn: 'মহাস্থানগড়ের আবাসস্থল, বাংলাদেশের প্রাচীনতম প্রত্নতাত্ত্বিক স্থান!', ar: 'موطن ماهاستانغار، أقدم موقع أثري في بنغلاديش!' } },
+                { id: 'naogaon', name: { en: 'Naogaon', bn: 'নওগাঁ', ar: 'ناوغاون' }, fact: { en: 'Has the famous Paharpur Buddhist Monastery, a UNESCO site!', bn: 'বিখ্যাত পাহাড়পুর বৌদ্ধ বিহার, একটি ইউনেস্কো সাইট!', ar: 'لديها دير باهاربور البوذي الشهير، موقع يونسكو!' } },
+                { id: 'natore', name: { en: 'Natore', bn: 'নাটোর', ar: 'ناتور' }, fact: { en: 'Famous for Kachagolla sweets and Uttara Ganabhaban palace.', bn: 'কাঁচাগোল্লা মিষ্টি এবং উত্তরা গণভবন প্রাসাদের জন্য বিখ্যাত।', ar: 'مشهورة بحلوى كاتشاغولا وقصر أوتارا غانابهابان.' } },
+                { id: 'chapainawabganj', name: { en: 'Chapainawabganj', bn: 'চাঁপাইনবাবগঞ্জ', ar: 'تشاباينوابغانج' }, fact: { en: 'Mango capital of Bangladesh - produces the best mangoes!', bn: 'বাংলাদেশের আমের রাজধানী - সেরা আম উৎপাদন করে!', ar: 'عاصمة المانجو في بنغلاديش - تنتج أفضل المانجو!' } },
+                { id: 'pabna', name: { en: 'Pabna', bn: 'পাবনা', ar: 'بابنا' }, fact: { en: 'Known for handloom industry and Hardinge Bridge.', bn: 'তাঁত শিল্প এবং হার্ডিঞ্জ ব্রিজের জন্য পরিচিত।', ar: 'معروفة بصناعة النسيج اليدوي وجسر هاردينغ.' } },
+                { id: 'sirajganj', name: { en: 'Sirajganj', bn: 'সিরাজগঞ্জ', ar: 'سيراجغانج' }, fact: { en: 'Famous for Bangabandhu Jamuna Bridge, the largest bridge!', bn: 'বঙ্গবন্ধু যমুনা সেতুর জন্য বিখ্যাত, বৃহত্তম সেতু!', ar: 'مشهورة بجسر بانغاباندو جامونا، أكبر جسر!' } },
+                { id: 'joypurhat', name: { en: 'Joypurhat', bn: 'জয়পুরহাট', ar: 'جويبورهات' }, fact: { en: 'Known for sugar mills and paddy fields.', bn: 'চিনিকল এবং ধানক্ষেতের জন্য পরিচিত।', ar: 'معروفة بمصانع السكر وحقول الأرز.' } }
+            ],
+            khulna: [
+                { id: 'khulna_city', name: { en: 'Khulna', bn: 'খুলনা', ar: 'خولنا' }, fact: { en: 'Gateway to the Sundarbans, the largest mangrove forest!', bn: 'সুন্দরবনের প্রবেশদ্বার, বৃহত্তম ম্যানগ্রোভ বন!', ar: 'بوابة سونداربان، أكبر غابة مانغروف!' } },
+                { id: 'bagerhat', name: { en: 'Bagerhat', bn: 'বাগেরহাট', ar: 'باغيرهات' }, fact: { en: 'Home to Sixty Dome Mosque, a UNESCO World Heritage Site!', bn: 'ষাট গম্বুজ মসজিদের আবাসস্থল, ইউনেস্কো বিশ্ব ঐতিহ্যবাহী স্থান!', ar: 'موطن مسجد ستين قبة، موقع تراث عالمي لليونسكو!' } },
+                { id: 'satkhira', name: { en: 'Satkhira', bn: 'সাতক্ষীরা', ar: 'ساتخيرا' }, fact: { en: 'Known for shrimp farming and borders India.', bn: 'চিংড়ি চাষ এবং ভারতের সীমান্তের জন্য পরিচিত।', ar: 'معروفة بتربية الجمبري وتحد الهند.' } },
+                { id: 'jessore', name: { en: 'Jessore', bn: 'যশোর', ar: 'جيسور' }, fact: { en: 'First independent district of Bangladesh, historic city!', bn: 'বাংলাদেশের প্রথম স্বাধীন জেলা, ঐতিহাসিক শহর!', ar: 'أول منطقة مستقلة في بنغلاديش، مدينة تاريخية!' } },
+                { id: 'narail', name: { en: 'Narail', bn: 'নড়াইল', ar: 'نارايل' }, fact: { en: 'Birthplace of many famous artists and painters.', bn: 'অনেক বিখ্যাত শিল্পী ও চিত্রকরের জন্মস্থান।', ar: 'مسقط رأس العديد من الفنانين والرسامين المشهورين.' } },
+                { id: 'magura', name: { en: 'Magura', bn: 'মাগুরা', ar: 'ماغورا' }, fact: { en: 'Known for agricultural products and peaceful environment.', bn: 'কৃষি পণ্য এবং শান্তিপূর্ণ পরিবেশের জন্য পরিচিত।', ar: 'معروفة بالمنتجات الزراعية والبيئة الهادئة.' } },
+                { id: 'jhenaidah', name: { en: 'Jhenaidah', bn: 'ঝিনাইদহ', ar: 'جينايداه' }, fact: { en: 'Known for date palm juice (Khejur Gur).', bn: 'খেজুরের রস (খেজুর গুড়) এর জন্য পরিচিত।', ar: 'معروفة بعصير نخيل التمر (خيجور غور).' } },
+                { id: 'chuadanga', name: { en: 'Chuadanga', bn: 'চুয়াডাঙ্গা', ar: 'تشواداংغা' }, fact: { en: 'First place where Bangladesh flag was hoisted!', bn: 'প্রথম স্থান যেখানে বাংলাদেশের পতাকা উত্তোলন করা হয়েছিল!', ar: 'أول مكان رُفع فيه علم بنغلاديش!' } },
+                { id: 'meherpur', name: { en: 'Meherpur', bn: 'মেহেরপুর', ar: 'ميهيربور' }, fact: { en: 'Site of Mujibnagar, where first Bangladesh government formed!', bn: 'মুজিবনগরের স্থান, যেখানে প্রথম বাংলাদেশ সরকার গঠিত হয়েছিল!', ar: 'موقع مجيبنغار، حيث تشكلت أول حكومة بنغلاديشية!' } },
+                { id: 'kushtia', name: { en: 'Kushtia', bn: 'কুষ্টিয়া', ar: 'كوشتيا' }, fact: { en: 'Home of poet Rabindranath Tagore\'s Shilaidaha Kuthibari!', bn: 'কবি রবীন্দ্রনাথ ঠাকুরের শিলাইদহ কুঠিবাড়ির আবাসস্থল!', ar: 'موطن شيلايداها كوثيباري للشاعر رابندراناث طاغور!' } }
+            ],
+            barisal: [
+                { id: 'barisal_city', name: { en: 'Barisal', bn: 'বরিশাল', ar: 'باريسال' }, fact: { en: 'Known as the "Venice of the East" for its canals!', bn: '"প্রাচ্যের ভেনিস" নামে পরিচিত খালের জন্য!', ar: 'معروفة بـ"فينيسيا الشرق" لقنواتها!' } },
+                { id: 'patuakhali', name: { en: 'Patuakhali', bn: 'পটুয়াখালী', ar: 'باتواخالي' }, fact: { en: 'Home to Kuakata beach, called "Daughter of the Sea"!', bn: 'কুয়াকাটা সৈকতের আবাসস্থল, "সাগর কন্যা" নামে পরিচিত!', ar: 'موطن شاطئ كواكاتا، يسمى "ابنة البحر"!' } },
+                { id: 'bhola', name: { en: 'Bhola', bn: 'ভোলা', ar: 'بهولا' }, fact: { en: 'Largest island district in Bangladesh!', bn: 'বাংলাদেশের বৃহত্তম দ্বীপ জেলা!', ar: 'أكبر منطقة جزيرة في بنغلاديش!' } },
+                { id: 'pirojpur', name: { en: 'Pirojpur', bn: 'পিরোজপুর', ar: 'بيروجبور' }, fact: { en: 'Famous for its floating guava markets!', bn: 'ভাসমান পেয়ারা বাজারের জন্য বিখ্যাত!', ar: 'مشهورة بأسواق الجوافة العائمة!' } },
+                { id: 'jhalokathi', name: { en: 'Jhalokathi', bn: 'ঝালকাঠি', ar: 'جهالاكاثي' }, fact: { en: 'Smallest district in Barisal, known for rivers.', bn: 'বরিশালের সবচেয়ে ছোট জেলা, নদীর জন্য পরিচিত।', ar: 'أصغر منطقة في باريسال، معروفة بالأنهار.' } },
+                { id: 'barguna', name: { en: 'Barguna', bn: 'বরগুনা', ar: 'بارغونا' }, fact: { en: 'Coastal district with beautiful mangrove forests.', bn: 'সুন্দর ম্যানগ্রোভ বন সমৃদ্ধ উপকূলীয় জেলা।', ar: 'منطقة ساحلية بغابات مانغروف جميلة.' } }
+            ],
+            sylhet: [
+                { id: 'sylhet_city', name: { en: 'Sylhet', bn: 'সিলেট', ar: 'سيلهت' }, fact: { en: 'Known for tea gardens and Hazrat Shahjalal shrine!', bn: 'চা বাগান এবং হযরত শাহজালাল মাজারের জন্য পরিচিত!', ar: 'معروفة بحدائق الشاي وضريح حضرت شاهجلال!' } },
+                { id: 'moulvibazar', name: { en: 'Moulvibazar', bn: 'মৌলভীবাজার', ar: 'مولفيبازار' }, fact: { en: 'Home to Lawachara rainforest and tea estates!', bn: 'লাউয়াছড়া রেইনফরেস্ট এবং চা এস্টেটের আবাসস্থল!', ar: 'موطن غابة لاواتشارا المطيرة ومزارع الشاي!' } },
+                { id: 'habiganj', name: { en: 'Habiganj', bn: 'হবিগঞ্জ', ar: 'هابيغانج' }, fact: { en: 'Famous for Satchari National Park and natural gas.', bn: 'সাতছড়ি জাতীয় উদ্যান এবং প্রাকৃতিক গ্যাসের জন্য বিখ্যাত।', ar: 'مشهورة بمتنزه ساتشاري الوطني والغاز الطبيعي.' } },
+                { id: 'sunamganj', name: { en: 'Sunamganj', bn: 'সুনামগঞ্জ', ar: 'سوناماغانج' }, fact: { en: 'Land of haors and home of mystic poet Hason Raja!', bn: 'হাওড়ের দেশ এবং মরমী কবি হাসন রাজার জন্মভূমি!', ar: 'أرض الأراضي الرطبة وموطن الشاعر الصوفي هاسون راجا!' } }
+            ],
+            rangpur: [
+                { id: 'rangpur_city', name: { en: 'Rangpur', bn: 'রংপুর', ar: 'رانغبور' }, fact: { en: 'Known as the "Green City" for its agricultural lands!', bn: '"সবুজ শহর" নামে পরিচিত কৃষি জমির জন্য!', ar: 'معروفة بـ"المدينة الخضراء" لأراضيها الزراعية!' } },
+                { id: 'dinajpur', name: { en: 'Dinajpur', bn: 'দিনাজপুর', ar: 'ديناجبور' }, fact: { en: 'Home to Kantajew Temple and famous for lychees!', bn: 'কান্তজীউ মন্দির এবং লিচুর জন্য বিখ্যাত!', ar: 'موطن معبد كانتاجيو ومشهورة بالليتشي!' } },
+                { id: 'thakurgaon', name: { en: 'Thakurgaon', bn: 'ঠাকুরগাঁও', ar: 'ثاكورغاون' }, fact: { en: 'Northernmost district, known for flat terrain and rice.', bn: 'সবচেয়ে উত্তরের জেলা, সমতল ভূমি এবং ধানের জন্য পরিচিত।', ar: 'أقصى منطقة شمالية، معروفة بالتضاريس المسطحة والأرز.' } },
+                { id: 'panchagarh', name: { en: 'Panchagarh', bn: 'পঞ্চগড়', ar: 'بانتشاغار' }, fact: { en: 'Can see the Himalayan peaks on clear days!', bn: 'পরিষ্কার দিনে হিমালয়ের চূড়া দেখা যায়!', ar: 'يمكن رؤية قمم الهيمالايا في الأيام الصافية!' } },
+                { id: 'nilphamari', name: { en: 'Nilphamari', bn: 'নীলফামারী', ar: 'نيلفاماري' }, fact: { en: 'Named after the blue lotus (Nil = blue, Phamari = lotus).', bn: 'নীল পদ্মের নামে নামকরণ (নীল = নীল, ফামারী = পদ্ম)।', ar: 'سميت على اسم اللوتس الأزرق (نيل = أزرق، فاماري = لوتس).' } },
+                { id: 'lalmonirhat', name: { en: 'Lalmonirhat', bn: 'লালমনিরহাট', ar: 'لالمونيرهات' }, fact: { en: 'Home to Bangladesh\'s only tea garden in the north!', bn: 'উত্তরে বাংলাদেশের একমাত্র চা বাগানের আবাসস্থল!', ar: 'موطن حديقة الشاي الوحيدة في بنغلاديش في الشمال!' } },
+                { id: 'kurigram', name: { en: 'Kurigram', bn: 'কুড়িগ্রাম', ar: 'كوريغرام' }, fact: { en: 'Located along the mighty Brahmaputra river.', bn: 'শক্তিশালী ব্রহ্মপুত্র নদীর তীরে অবস্থিত।', ar: 'تقع على طول نهر براهمابوترا العظيم.' } },
+                { id: 'gaibandha', name: { en: 'Gaibandha', bn: 'গাইবান্ধা', ar: 'غايباندها' }, fact: { en: 'Famous for char lands and river erosion areas.', bn: 'চর এলাকা এবং নদী ভাঙন এলাকার জন্য বিখ্যাত।', ar: 'مشهورة بالأراضي الرسوبية ومناطق تآكل الأنهار.' } }
+            ],
+            mymensingh: [
+                { id: 'mymensingh_city', name: { en: 'Mymensingh', bn: 'ময়মনসিংহ', ar: 'ميمنسينغ' }, fact: { en: 'Home to Bangladesh Agricultural University, the oldest!', bn: 'বাংলাদেশ কৃষি বিশ্ববিদ্যালয়ের আবাসস্থল, সবচেয়ে প্রাচীন!', ar: 'موطن جامعة بنغلاديش الزراعية، الأقدم!' } },
+                { id: 'jamalpur', name: { en: 'Jamalpur', bn: 'জামালপুর', ar: 'جامالبور' }, fact: { en: 'Known for Lauchapara Safari Park and river beauty.', bn: 'লাউয়াছড়া সাফারি পার্ক এবং নদীর সৌন্দর্যের জন্য পরিচিত।', ar: 'معروفة بحديقة لاوتشابارا سفاري وجمال الأنهار.' } },
+                { id: 'sherpur', name: { en: 'Sherpur', bn: 'শেরপুর', ar: 'شيربور' }, fact: { en: 'Has beautiful hills and borders with India.', bn: 'সুন্দর পাহাড় এবং ভারতের সাথে সীমান্ত আছে।', ar: 'لديها تلال جميلة وتحد الهند.' } },
+                { id: 'netrokona', name: { en: 'Netrokona', bn: 'নেত্রকোণা', ar: 'نيتروكونا' }, fact: { en: 'Known for haors, Birishiri and indigenous cultures.', bn: 'হাওড়, বিরিশিরি এবং আদিবাসী সংস্কৃতির জন্য পরিচিত।', ar: 'معروفة بالأراضي الرطبة وبيريشيري والثقافات الأصلية.' } }
+            ]
+        };
+
+        // ===== GAME STATE =====
+        let currentLang = 'en';
+        let currentScreen = 'menu';
+        let currentPuzzle = null;
+        let currentLearnMode = null;
+        let learnIndex = 0;
+        let placedPieces = [];
+        let timerInterval = null;
+        let elapsedTime = 0;
+
+        // Progress stored in localStorage
+        let progress = JSON.parse(localStorage.getItem('bdMapProgress')) || {
+            divisionsCompleted: false,
+            districtsCompleted: {}
+        };
+
+        // ===== INITIALIZATION =====
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguageSelector();
+            updateProgress();
+            updateDistrictButton();
+        });
+
+        // ===== LANGUAGE SYSTEM =====
+        function initLanguageSelector() {
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentLang = btn.dataset.lang;
+                    updateAllText();
+                });
+            });
+        }
+
+        function updateAllText() {
+            document.querySelectorAll('[data-lang-en]').forEach(el => {
+                const text = el.getAttribute(`data-lang-${currentLang}`);
+                if (text) el.textContent = text;
+            });
+        }
+
+        // ===== SCREEN MANAGEMENT =====
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            currentScreen = screenId;
+            
+            const backBtn = document.getElementById('backBtn');
+            backBtn.style.visibility = screenId === 'menuScreen' ? 'hidden' : 'visible';
+            backBtn.onclick = handleBack;
+        }
+
+        function handleBack() {
+            stopTimer();
+            if (currentScreen === 'districtLevelsScreen' || currentScreen === 'learnScreen') {
+                showScreen('menuScreen');
+            } else if (currentScreen === 'puzzleScreen') {
+                if (currentPuzzle && currentPuzzle.type === 'district') {
+                    showDistrictLevels();
+                } else {
+                    showScreen('menuScreen');
+                }
+            }
+        }
+
+        // ===== PROGRESS SYSTEM =====
+        function updateProgress() {
+            const totalLevels = 9; // 1 division + 8 districts
+            let completed = progress.divisionsCompleted ? 1 : 0;
+            completed += Object.keys(progress.districtsCompleted).length;
+            
+            const percent = Math.round((completed / totalLevels) * 100);
+            document.getElementById('progressPercent').textContent = `${percent}%`;
+            document.getElementById('progressFill').style.width = `${percent}%`;
+        }
+
+        function updateDistrictButton() {
+            const btn = document.getElementById('districtBtn');
+            if (!progress.divisionsCompleted) {
+                btn.classList.add('locked');
+            } else {
+                btn.classList.remove('locked');
+            }
+        }
+
+        function saveProgress() {
+            localStorage.setItem('bdMapProgress', JSON.stringify(progress));
+            updateProgress();
+            updateDistrictButton();
+        }
+
+        // ===== PUZZLE GAME =====
+        function startGame(type, divisionId = null) {
+            if (type === 'districts' && !progress.divisionsCompleted) {
+                showToast(currentLang === 'bn' ? 'প্রথমে বিভাগের ধাঁধা সম্পূর্ণ করো!' : 'Complete division puzzle first!');
+                return;
+            }
+
+            currentPuzzle = { type, divisionId };
+            placedPieces = [];
+            elapsedTime = 0;
+            
+            showScreen('puzzleScreen');
+            setupPuzzle();
+            startTimer();
+        }
+
+        function setupPuzzle() {
+            const puzzleTitle = document.getElementById('puzzleTitle');
+            const piecesGrid = document.getElementById('piecesGrid');
+            const placedContainer = document.getElementById('placedPiecesContainer');
+            const emptyState = document.getElementById('emptyState');
+            
+            piecesGrid.innerHTML = '';
+            placedContainer.innerHTML = '';
+            emptyState.classList.remove('hidden');
+            
+            let pieces, totalPieces;
+            
+            if (currentPuzzle.type === 'divisions') {
+                puzzleTitle.textContent = currentLang === 'bn' ? 'বিভাগের ধাঁধা' : 'Division Puzzle';
+                pieces = [...DIVISIONS];
+                totalPieces = 8;
+            } else {
+                const division = DIVISIONS.find(d => d.id === currentPuzzle.divisionId);
+                puzzleTitle.textContent = division.name[currentLang] + (currentLang === 'bn' ? ' বিভাগ' : ' Division');
+                pieces = [...DISTRICTS[currentPuzzle.divisionId]];
+                totalPieces = pieces.length;
+            }
+            
+            // Shuffle pieces
+            pieces.sort(() => Math.random() - 0.5);
+            
+            // Create piece elements
+            pieces.forEach(piece => {
+                const pieceEl = document.createElement('div');
+                pieceEl.className = 'puzzle-piece';
+                pieceEl.dataset.id = piece.id;
+                pieceEl.innerHTML = `
+                    <img src="${currentPuzzle.type === 'divisions' ? piece.image : 'images/map_division_' + currentPuzzle.divisionId + '.png'}" alt="${piece.name[currentLang]}">
+                    <div class="puzzle-piece-name">${piece.name[currentLang]}</div>
+                `;
+                
+                // Touch and click events
+                pieceEl.addEventListener('click', () => placePiece(piece));
+                pieceEl.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    placePiece(piece);
+                });
+                
+                piecesGrid.appendChild(pieceEl);
+            });
+            
+            updatePuzzleStats(0, totalPieces);
+        }
+
+        function placePiece(piece) {
+            if (placedPieces.includes(piece.id)) return;
+            
+            placedPieces.push(piece.id);
+            
+            // Hide empty state
+            document.getElementById('emptyState').classList.add('hidden');
+            
+            // Mark piece as placed in bank
+            document.querySelector(`.puzzle-piece[data-id="${piece.id}"]`).classList.add('placed');
+            
+            // Add piece visually to the placed container
+            const placedContainer = document.getElementById('placedPiecesContainer');
+            
+            if (currentPuzzle.type === 'divisions') {
+                const divisionData = DIVISIONS.find(d => d.id === piece.id);
+                if (divisionData) {
+                    const placedEl = document.createElement('div');
+                    placedEl.className = 'placed-piece';
+                    placedEl.innerHTML = `
+                        <img src="${divisionData.image}" alt="${piece.name[currentLang]}">
+                        <div class="placed-piece-name">${piece.name[currentLang]}</div>
+                    `;
+                    placedContainer.appendChild(placedEl);
+                }
+            } else {
+                // For districts
+                const placedEl = document.createElement('div');
+                placedEl.className = 'placed-piece';
+                placedEl.innerHTML = `
+                    <div class="placed-piece-name" style="font-size: 0.85em; padding: 5px 10px;">${piece.name[currentLang]} ✓</div>
+                `;
+                placedContainer.appendChild(placedEl);
+            }
+            
+            // Speak the name
+            speak(piece.name[currentLang]);
+            
+            // Show toast
+            showToast(piece.name[currentLang] + '! ✓');
+            
+            // Update stats
+            const totalPieces = currentPuzzle.type === 'divisions' ? 8 : DISTRICTS[currentPuzzle.divisionId].length;
+            updatePuzzleStats(placedPieces.length, totalPieces);
+            
+            // Check completion
+            if (placedPieces.length === totalPieces) {
+                setTimeout(() => completePuzzle(), 500);
+            }
+        }
+
+        function updatePuzzleStats(placed, total) {
+            const statsText = currentLang === 'bn' 
+                ? `${placed} / ${total} টুকরো বসানো হয়েছে`
+                : `${placed} / ${total} pieces placed`;
+            document.getElementById('puzzleStats').textContent = statsText;
+        }
+
+        function completePuzzle() {
+            stopTimer();
+            
+            // Save progress
+            if (currentPuzzle.type === 'divisions') {
+                progress.divisionsCompleted = true;
+            } else {
+                progress.districtsCompleted[currentPuzzle.divisionId] = true;
+            }
+            saveProgress();
+            
+            // Calculate stars
+            let stars = '⭐';
+            if (elapsedTime < 60) stars = '⭐⭐⭐';
+            else if (elapsedTime < 120) stars = '⭐⭐';
+            
+            // Show modal
+            document.getElementById('modalTime').textContent = formatTime(elapsedTime);
+            document.getElementById('modalStars').textContent = stars;
+            document.getElementById('successModal').classList.add('active');
+            
+            // Confetti!
+            createConfetti();
+            
+            // Speak congratulation
+            const congrats = currentLang === 'bn' ? 'অসাধারণ! তুমি জিতে গেছ!' : 'Amazing! You did it!';
+            speak(congrats);
+        }
+
+        function closeModal() {
+            document.getElementById('successModal').classList.remove('active');
+            
+            if (currentPuzzle.type === 'divisions') {
+                showScreen('menuScreen');
+            } else {
+                showDistrictLevels();
+            }
+        }
+
+        // ===== TIMER =====
+        function startTimer() {
+            elapsedTime = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                elapsedTime++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function updateTimerDisplay() {
+            document.getElementById('puzzleTimer').textContent = formatTime(elapsedTime);
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // ===== DISTRICT LEVEL SELECTION =====
+        function showDistrictLevels() {
+            if (!progress.divisionsCompleted) {
+                showToast(currentLang === 'bn' ? 'প্রথমে বিভাগের ধাঁধা সম্পূর্ণ করো!' : 'Complete division puzzle first!');
+                return;
+            }
+            
+            showScreen('districtLevelsScreen');
+            
+            const grid = document.getElementById('districtLevelGrid');
+            grid.innerHTML = '';
+            
+            DIVISIONS.forEach(division => {
+                const isCompleted = progress.districtsCompleted[division.id];
+                const card = document.createElement('div');
+                card.className = `level-card ${isCompleted ? 'completed' : ''}`;
+                card.innerHTML = `
+                    <img src="${division.image}" alt="${division.name[currentLang]}" class="level-image">
+                    <div class="level-info">
+                        <div class="level-name">${division.name[currentLang]}</div>
+                        <div class="level-districts">${division.districts} ${currentLang === 'bn' ? 'টি জেলা' : 'Districts'}</div>
+                    </div>
+                `;
+                card.onclick = () => startGame('district', division.id);
+                grid.appendChild(card);
+            });
+        }
+
+        // ===== LEARN MODE =====
+        function startLearnMode(type) {
+            currentLearnMode = type;
+            learnIndex = 0;
+            showScreen('learnScreen');
+            showLearnItem();
+        }
+
+        function showLearnItem() {
+            let items;
+            if (currentLearnMode === 'divisions') {
+                items = DIVISIONS;
+            }
+            
+            const item = items[learnIndex];
+            
+            document.getElementById('learnImage').src = item.image;
+            document.getElementById('learnName').textContent = item.name[currentLang];
+            
+            // Show secondary name
+            const secondaryLang = currentLang === 'en' ? 'bn' : 'en';
+            document.getElementById('learnNameSecondary').textContent = item.name[secondaryLang];
+            
+            // Show fact if available
+            const factEl = document.getElementById('learnFact');
+            const factText = document.getElementById('learnFactText');
+            
+            if (currentLearnMode === 'divisions') {
+                const districts = DISTRICTS[item.id];
+                if (districts && districts[0] && districts[0].fact) {
+                    factEl.style.display = 'block';
+                    factText.textContent = `${item.districts} ${currentLang === 'bn' ? 'টি জেলা নিয়ে গঠিত' : 'districts'}`;
+                } else {
+                    factEl.style.display = 'none';
+                }
+            }
+            
+            // Update nav buttons
+            document.getElementById('prevBtn').disabled = learnIndex === 0;
+            document.getElementById('nextBtn').disabled = learnIndex === items.length - 1;
+            
+            // Auto speak
+            speak(item.name[currentLang]);
+        }
+
+        function navigateLearn(direction) {
+            const items = currentLearnMode === 'divisions' ? DIVISIONS : [];
+            learnIndex = Math.max(0, Math.min(items.length - 1, learnIndex + direction));
+            showLearnItem();
+        }
+
+        function speakCurrent() {
+            const items = currentLearnMode === 'divisions' ? DIVISIONS : [];
+            const item = items[learnIndex];
+            speak(item.name[currentLang]);
+        }
+
+        // ===== TEXT TO SPEECH =====
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Set language
+                if (currentLang === 'bn') {
+                    utterance.lang = 'bn-BD';
+                } else if (currentLang === 'ar') {
+                    utterance.lang = 'ar-SA';
+                } else {
+                    utterance.lang = 'en-US';
+                }
+                
+                utterance.rate = 0.9;
+                utterance.pitch = 1.1;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // ===== UTILITIES =====
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#95e1d3', '#f38181', '#aa96da'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                confetti.style.height = confetti.style.width;
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 3000);
+            }
+        }
+    </script>
 </body>
 </html>

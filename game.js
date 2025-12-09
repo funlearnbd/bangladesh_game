@@ -1,69 +1,77 @@
 // --- SCENE 1: LOADER ---
+// This scene loads all the pictures before the game starts
 class SceneLoad extends Phaser.Scene {
     constructor() { super('SceneLoad'); }
 
     preload() {
-        // 1. Loading Text
+        // 1. Loading Text (Shows on screen while loading)
         let loadingText = this.add.text(400, 200, "Loading...", { 
             fontSize: '24px', fill: '#000' 
         }).setOrigin(0.5);
 
-        // 2. ERROR HANDLER (This will help us if something is still wrong)
+        // 2. ERROR HANDLER (Helps us see if a file is missing)
         this.load.on('loaderror', function (file) {
             console.log("Failed to load: " + file.src);
+            loadingText.setText("Missing: " + file.key); 
+            loadingText.setColor('#ff0000');
         });
 
-        // 3. LOAD ASSETS (Removed 'assets/' prefix)
-        // Make sure your files on GitHub match these names EXACTLY!
+        // 3. LOAD ASSETS
+        // We use 'assets/' because your files are inside the assets folder.
         
-        this.load.image('logo', 'logo.png'); 
+        this.load.image('logo', 'assets/logo.png'); 
 
         // Mascots
-        this.load.image('tiger_idle', 'mascot_tiger_01_idle.png');
-        this.load.image('tiger_talk', 'mascot_tiger_02_talking.png');
-        this.load.image('tiger_happy', 'mascot_tiger_03_happy.png');
-        this.load.image('tiger_sad', 'mascot_tiger_04_sad.png');
-        this.load.image('tiger_surprised', 'mascot_tiger_05_surprised.png');
-        this.load.image('tiger_wave', 'mascot_tiger_06_waving.png');
-        this.load.image('tiger_jump', 'mascot_tiger_07_jumping.png');
-        this.load.image('tiger_sleep', 'mascot_tiger_08_sleeping.png');
+        this.load.image('tiger_idle', 'assets/mascot_tiger_01_idle.png');
+        this.load.image('tiger_talk', 'assets/mascot_tiger_02_talking.png');
+        this.load.image('tiger_happy', 'assets/mascot_tiger_03_happy.png');
+        this.load.image('tiger_sad', 'assets/mascot_tiger_04_sad.png');
+        this.load.image('tiger_surprised', 'assets/mascot_tiger_05_surprised.png');
+        this.load.image('tiger_wave', 'assets/mascot_tiger_06_waving.png');
+        this.load.image('tiger_jump', 'assets/mascot_tiger_07_jumping.png');
+        this.load.image('tiger_sleep', 'assets/mascot_tiger_08_sleeping.png');
 
         // Maps
-        this.load.image('map_flag', 'map_bangladesh_intigrated_with_flag.png'); 
-        this.load.image('map_base', 'map_bangladesh_8divisions.png');
+        // Note: Using the spelling 'intigrated' as seen in your file list
+        this.load.image('map_flag', 'assets/map_bangladesh_intigrated_with_flag.png'); 
+        this.load.image('map_base', 'assets/map_bangladesh_8divisions.png');
 
-        // Division Pieces
-        this.load.image('div_barisal', 'map_division_barisal.png');
-        this.load.image('div_chittagong', 'map_division_chittagong.png');
-        this.load.image('div_dhaka', 'map_division_dhaka.png');
-        this.load.image('div_khulna', 'map_division_khulna.png');
-        this.load.image('div_mymensingh', 'map_division_mymensingh.png');
-        this.load.image('div_rajshahi', 'map_division_rajshahi.png');
-        this.load.image('div_rangpur', 'map_division_rangpur.png');
-        this.load.image('div_sylhet', 'map_division_sylhet.png');
+        // Division Pieces (The puzzle parts)
+        this.load.image('div_barisal', 'assets/map_division_barisal.png');
+        this.load.image('div_chittagong', 'assets/map_division_chittagong.png');
+        this.load.image('div_dhaka', 'assets/map_division_dhaka.png');
+        this.load.image('div_khulna', 'assets/map_division_khulna.png');
+        this.load.image('div_mymensingh', 'assets/map_division_mymensingh.png');
+        this.load.image('div_rajshahi', 'assets/map_division_rajshahi.png');
+        this.load.image('div_rangpur', 'assets/map_division_rangpur.png');
+        this.load.image('div_sylhet', 'assets/map_division_sylhet.png');
     }
 
     create() {
+        // Once loading is done, go to the Intro screen
         this.scene.start('SceneIntro');
     }
 }
 
 // --- SCENE 2: INTRO ---
+// The Welcome Screen with the Flag Map
 class SceneIntro extends Phaser.Scene {
     constructor() { super('SceneIntro'); }
 
     create() {
+        // Light Blue Background
         this.cameras.main.setBackgroundColor('#E0F7FA');
 
-        // Logo
+        // Logo (Top Left)
         this.add.image(100, 60, 'logo').setScale(0.15);
 
-        // Waving Tiger
+        // Waving Tiger (Left Side)
         let tiger = this.add.image(150, 300, 'tiger_wave').setScale(0.4);
 
-        // Flag Map
+        // Flag Map (Center)
         let flagMap = this.add.image(550, 250, 'map_flag').setScale(0.45);
         
+        // Gentle Pulse Animation for the Map
         this.tweens.add({
             targets: flagMap,
             scale: 0.48,
@@ -73,15 +81,17 @@ class SceneIntro extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        // Title
-        let titleText = this.add.text(400, 50, "Welcome to Bangladesh!", {
+        // Title Text
+        this.add.text(400, 50, "Welcome to Bangladesh!", {
             fontFamily: 'Arial', fontSize: '32px', color: '#006a4e', fontStyle: 'bold'
         }).setOrigin(0.5);
         
-        let subText = this.add.text(550, 400, "Click the Map to Play!", {
+        // Click Instruction
+        this.add.text(550, 400, "Click the Map to Play!", {
             fontFamily: 'Arial', fontSize: '24px', color: '#f42a41', backgroundColor: '#ffffff', padding: {x:10, y:5}
         }).setOrigin(0.5);
 
+        // Make Map Clickable
         flagMap.setInteractive();
         flagMap.on('pointerdown', () => {
             this.scene.start('SceneLevel1');
@@ -90,56 +100,64 @@ class SceneIntro extends Phaser.Scene {
 }
 
 // --- SCENE 3: LEVEL 1 ---
+// The Puzzle Game
 class SceneLevel1 extends Phaser.Scene {
     constructor() { super('SceneLevel1'); }
 
     create() {
-        // UI
+        // UI: Logo and Helper Tiger
         this.add.image(80, 50, 'logo').setScale(0.12);
         let tiger = this.add.image(700, 380, 'tiger_talk').setScale(0.25);
         
+        // Instruction Text
         let instruction = this.add.text(400, 40, "Drag DHAKA to the map!", { 
             fontSize: '28px', color: '#000', backgroundColor: '#ffffff', padding: { x: 10, y: 5 }
         }).setOrigin(0.5);
 
-        // Base Map (Guide)
+        // 1. Base Map (The grey guide in the background)
         let baseMap = this.add.image(400, 240, 'map_base').setScale(0.4).setAlpha(0.25);
 
-        // Puzzle Piece (Dhaka)
+        // 2. The Puzzle Piece (Dhaka) - Spawns on the left
         let piece = this.add.image(150, 240, 'div_dhaka').setScale(0.15).setInteractive();
         this.input.setDraggable(piece);
 
-        // Drag Logic
+        // 3. Logic: Allow Dragging
         this.input.on('drag', function (pointer, gameObject, dragX, dragY) {
             gameObject.x = dragX;
             gameObject.y = dragY;
         });
 
-        // Drop Logic
+        // 4. Logic: Check Drop Position
         this.input.on('dragend', function (pointer, gameObject) {
+            // "Win Zone" coordinates (Approximate center for Dhaka)
             let correctX = 400; 
             let correctY = 240;
-            let tolerance = 60;
+            let tolerance = 60; // How close they need to be
 
+            // Check if dropped near the center
             if (Math.abs(gameObject.x - correctX) < tolerance && Math.abs(gameObject.y - correctY) < tolerance) {
+                // SUCCESS
                 gameObject.x = correctX;
                 gameObject.y = correctY;
-                gameObject.disableInteractive();
+                gameObject.disableInteractive(); // Lock it
                 
+                // Mascot becomes Happy
                 tiger.setTexture('tiger_happy');
                 instruction.setText("Good Job! That is Dhaka.");
                 instruction.setStyle({ color: 'green' });
 
             } else {
+                // FAILURE - Send back to start
                 gameObject.x = 150;
                 gameObject.y = 240;
                 
+                // Mascot becomes Sad
                 tiger.setTexture('tiger_sad');
                 instruction.setText("Try again!");
                 instruction.setStyle({ color: 'red' });
                 
                 // Reset mascot face after 2 seconds
-                let scene = this.scene; // Capture scene reference
+                let scene = this.scene; 
                 this.scene.time.delayedCall(2000, () => {
                     tiger.setTexture('tiger_talk');
                     instruction.setText("Drag DHAKA to the map!");
@@ -151,6 +169,7 @@ class SceneLevel1 extends Phaser.Scene {
 }
 
 // --- CONFIGURATION ---
+// This must be at the bottom so the Classes above are ready!
 const config = {
     type: Phaser.AUTO,
     width: 800,
